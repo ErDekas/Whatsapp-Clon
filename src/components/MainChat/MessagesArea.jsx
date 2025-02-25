@@ -5,8 +5,8 @@ import { useAuth } from '../../context/AuthContext';
 export const MessagesArea = ({ messages, userEvents }) => {
   const { user } = useAuth();
   const messagesEndRef = useRef(null);
-  const [systemMessages, setSystemMessages] = useState([]);
   const [visibleSystemMessages, setVisibleSystemMessages] = useState([]);
+  const timeoutsRef = useRef(new Map()); // Mapa para manejar timeouts de los mensajes
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -19,10 +19,8 @@ export const MessagesArea = ({ messages, userEvents }) => {
   useEffect(() => {
     if (!userEvents?.length) return;
 
-    // Obtener el último evento
     const latestEvent = userEvents[userEvents.length - 1];
-    
-    // Crear nuevo mensaje del sistema
+
     const newSystemMessage = {
       id: latestEvent.id || `system-${Date.now()}`,
       timestamp: latestEvent.timestamp,
@@ -31,16 +29,35 @@ export const MessagesArea = ({ messages, userEvents }) => {
         : `${latestEvent.username} se ha desconectado`
     };
 
-    setVisibleSystemMessages(prev => [...prev, newSystemMessage]);
+    // Eliminar mensajes previos si aún están en pantalla
+    if (visibleSystemMessages.length > 0) {
+      visibleSystemMessages.forEach((msg) => {
+        if (timeoutsRef.current.has(msg.id)) {
+          clearTimeout(timeoutsRef.current.get(msg.id));
+          timeoutsRef.current.delete(msg.id);
+        }
+      });
 
-    // Eliminar el mensaje después de 5 segundos
+      setVisibleSystemMessages([]); // Limpiamos todos los mensajes previos antes de añadir uno nuevo
+    }
+
+    setVisibleSystemMessages([newSystemMessage]); // Solo dejamos el mensaje actual
+
+    // Configurar timeout para eliminar el mensaje después de 5s
     const timeoutId = setTimeout(() => {
-      setVisibleSystemMessages(prev => 
-        prev.filter(msg => msg.id !== newSystemMessage.id)
-      );
+      setVisibleSystemMessages((prev) => prev.filter(msg => msg.id !== newSystemMessage.id));
+      timeoutsRef.current.delete(newSystemMessage.id);
     }, 5000);
 
-    return () => clearTimeout(timeoutId);
+    timeoutsRef.current.set(newSystemMessage.id, timeoutId);
+
+    return () => {
+      // Limpiar todos los timeouts al desmontar o cuando userEvents cambie
+      timeoutsRef.current.forEach((timeout, id) => {
+        clearTimeout(timeout);
+        timeoutsRef.current.delete(id);
+      });
+    };
   }, [userEvents]);
 
   return (
