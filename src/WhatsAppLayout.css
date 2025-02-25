@@ -33,8 +33,28 @@
 }
 
 .chat-list {
-  flex: 1;
+  width: 100%;
+  background-color: #f8f9fa;
+  border-right: 1px solid #dee2e6;
   overflow-y: auto;
+  height: 100%;
+  padding: 8px 0;
+}
+
+.chat-list-title {
+  padding: 12px 16px;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.no-users-message {
+  text-align: center;
+  color: #6c757d;
+  padding: 16px;
+  font-style: italic;
 }
 
 .chat-item {
@@ -69,12 +89,7 @@
   font-weight: 600;
 }
 
-.chat-time {
-  font-size: 0.8rem;
-  color: #667781;
-}
-
-.last-message {
+.chat-last-message {
   font-size: 0.9rem;
   color: #667781;
   white-space: nowrap;
@@ -264,6 +279,22 @@
   font-weight: bold;
   margin-top: 20px;
   transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.toggle-auth-button {
+  background: linear-gradient(135deg, #128C7E, #0E6655);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 20px;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+.toggle-auth-button:hover {
+  background: linear-gradient(135deg, #0E6655, #075E54);
+  transform: scale(1.05);
 }
 
 .google-auth-button {

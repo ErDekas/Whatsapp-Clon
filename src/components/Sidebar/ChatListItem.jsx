@@ -1,15 +1,15 @@
 import React from 'react';
 
-export const ChatListItem = ({ user, time, lastMessage }) => {
+export const ChatListItem = ({ user, avatar, lastMessage }) => {
   return (
     <div className="chat-item">
-      <div className="avatar"></div>
+      <div className="chat-avatar">
+          <div className="avatar"></div>
+        <span className="online-indicator"></span>
+      </div>
       <div className="chat-info">
-        <div className="chat-header">
-          <span className="chat-name">{user}</span>
-          <span className="chat-time">{time}</span>
-        </div>
-        <p className="last-message">{lastMessage}</p>
+        <div className="chat-name">{user}</div>
+        <div className="chat-last-message">{lastMessage}</div>
       </div>
     </div>
   );

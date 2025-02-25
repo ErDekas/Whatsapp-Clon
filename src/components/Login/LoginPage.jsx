@@ -5,15 +5,19 @@ import axios from 'axios';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
-  const { login, signInWithEmail, signInWithGoogle, signInWithGitHub } = useAuth();
+  const { login, signInWithEmail, signUpWithEmail, signInWithGoogle, signInWithGitHub } = useAuth();
   
   // Estado para controlar qué vista mostrar (login o personalización)
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   
+  // Estado para controlar si estamos en modo de inicio de sesión o registro
+  const [isRegisterMode, setIsRegisterMode] = useState(false);
+  
   // Estado para las credenciales de inicio de sesión
   const [credentials, setCredentials] = useState({
     email: '',
-    password: ''
+    password: '',
+    confirmPassword: ''
   });
   
   // Estado para los datos de perfil
@@ -35,20 +39,15 @@ export const LoginPage = () => {
     const fetchAvatars = async () => {
       setLoadingAvatars(true);
       try {
-        // Asumiendo que tienes un endpoint que devuelve la lista de avatares
         const response = await axios.get('http://localhost:5000/avatars');
-        
-        // Formatea los datos para que coincidan con la estructura esperada
         const formattedAvatars = response.data.map((avatar, index) => ({
           id: index + 1,
           url: `http://localhost:5000/uploads/avatares/${avatar}`,
           alt: `Avatar ${index + 1}`
         }));
-        
         setAvatars(formattedAvatars);
       } catch (error) {
         console.error('Error al cargar avatares:', error);
-        // Si hay un error, usar algunos avatares predeterminados como fallback
         setAvatars([
           { id: 1, url: 'http://localhost:5000/uploads/avatares/avatar1.jpg', alt: 'Avatar 1' },
           { id: 2, url: 'http://localhost:5000/uploads/avatares/avatar2.jpg', alt: 'Avatar 2' },
@@ -91,8 +90,8 @@ export const LoginPage = () => {
     });
   };
 
-  // Valida el formulario de inicio de sesión
-  const validateLoginForm = () => {
+  // Valida el formulario de inicio de sesión o registro
+  const validateForm = () => {
     const newErrors = {};
     
     if (!credentials.email.trim()) {
@@ -105,6 +104,10 @@ export const LoginPage = () => {
       newErrors.password = 'La contraseña es obligatoria';
     } else if (credentials.password.length < 6) {
       newErrors.password = 'La contraseña debe tener al menos 6 caracteres';
+    }
+    
+    if (isRegisterMode && credentials.password !== credentials.confirmPassword) {
+      newErrors.confirmPassword = 'Las contraseñas no coinciden';
     }
     
     setErrors(newErrors);
@@ -131,19 +134,24 @@ export const LoginPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Maneja el envío del formulario de inicio de sesión
-  const handleEmailLogin = async (e) => {
+  // Maneja el envío del formulario de inicio de sesión o registro
+  const handleEmailAuth = async (e) => {
     e.preventDefault();
     
-    if (validateLoginForm()) {
+    if (validateForm()) {
       setLoading(true);
       try {
-        // Llamar a la función de autenticación con email/password
-        await signInWithEmail(credentials.email, credentials.password);
+        if (isRegisterMode) {
+          // Llamar a la función de registro con email/password
+          await signUpWithEmail(credentials.email, credentials.password);
+        } else {
+          // Llamar a la función de autenticación con email/password
+          await signInWithEmail(credentials.email, credentials.password);
+        }
         setIsAuthenticated(true);
         setLoading(false);
       } catch (error) {
-        setErrors({...errors, auth: 'Error al iniciar sesión: ' + error.message});
+        setErrors({...errors, auth: 'Error: ' + error.message});
         setLoading(false);
       }
     }
@@ -192,15 +200,15 @@ export const LoginPage = () => {
     }
   };
 
-  // Renderiza la vista de inicio de sesión
-  const renderLoginView = () => (
+  // Renderiza la vista de inicio de sesión o registro
+  const renderAuthView = () => (
     <div className="login-card">
       <h1>WhatsApp Clone</h1>
-      <p>Inicia sesión para continuar</p>
+      <p>{isRegisterMode ? 'Regístrate para continuar' : 'Inicia sesión para continuar'}</p>
       
       {errors.auth && <div className="error-banner">{errors.auth}</div>}
       
-      <form onSubmit={handleEmailLogin}>
+      <form onSubmit={handleEmailAuth}>
         <div className="form-group">
           <label htmlFor="email">Correo electrónico</label>
           <input
@@ -229,12 +237,28 @@ export const LoginPage = () => {
           {errors.password && <span className="error-message">{errors.password}</span>}
         </div>
         
+        {isRegisterMode && (
+          <div className="form-group">
+            <label htmlFor="confirmPassword">Confirmar contraseña</label>
+            <input
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              value={credentials.confirmPassword}
+              onChange={handleCredentialChange}
+              placeholder="Confirma tu contraseña"
+              className={errors.confirmPassword ? 'input-error' : ''}
+            />
+            {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
+          </div>
+        )}
+        
         <button 
           type="submit" 
           className="login-button" 
           disabled={loading}
         >
-          {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+          {loading ? (isRegisterMode ? 'Registrando...' : 'Iniciando sesión...') : (isRegisterMode ? 'Registrarse' : 'Iniciar sesión')}
         </button>
       </form>
       
@@ -257,6 +281,24 @@ export const LoginPage = () => {
           </button>
         </div>
       </div>
+      
+      <p className="toggle-auth-mode">
+        {isRegisterMode ? (
+          <span>
+            ¿Ya tienes una cuenta?{' '}
+            <button onClick={() => setIsRegisterMode(false)} className="toggle-auth-button">
+              Inicia sesión
+            </button>
+          </span>
+        ) : (
+          <span>
+            ¿No tienes una cuenta?{' '}
+            <button onClick={() => setIsRegisterMode(true)} className="toggle-auth-button">
+              Regístrate
+            </button>
+          </span>
+        )}
+      </p>
     </div>
   );
 
@@ -324,7 +366,7 @@ export const LoginPage = () => {
 
   return (
     <div className="login-container">
-      {isAuthenticated ? renderProfileView() : renderLoginView()}
+      {isAuthenticated ? renderProfileView() : renderAuthView()}
     </div>
   );
 };
