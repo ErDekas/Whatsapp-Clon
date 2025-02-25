@@ -1,0 +1,396 @@
+.whatsapp-container {
+  display: flex;
+  height: 100vh;
+  background-color: #f0f0f0;
+}
+
+/* Sidebar Styles */
+.sidebar {
+  width: 33%;
+  border-right: 1px solid #dadada;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  background-color: #ededed;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-icons {
+  display: flex;
+  gap: 16px;
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+  color: #54656f;
+  cursor: pointer;
+}
+
+.chat-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.chat-item {
+  display: flex;
+  padding: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #dadada;
+}
+
+.chat-item:hover {
+  background-color: #f5f5f5;
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  background-color: #dadada;
+  border-radius: 50%;
+  margin-right: 12px;
+}
+
+.chat-info {
+  flex: 1;
+}
+
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+}
+
+.chat-name {
+  font-weight: 600;
+}
+
+.chat-time {
+  font-size: 0.8rem;
+  color: #667781;
+}
+
+.last-message {
+  font-size: 0.9rem;
+  color: #667781;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Main Chat Styles */
+.main-chat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-header {
+  background-color: #ededed;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.contact-info {
+  display: flex;
+  align-items: center;
+}
+
+.contact-details {
+  margin-left: 12px;
+}
+
+.contact-name {
+  font-weight: 600;
+}
+
+.online-status {
+  font-size: 0.8rem;
+  color: #667781;
+}
+
+.messages-area {
+  flex: 1;
+  background-color: #efeae2;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.message-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.message {
+  display: flex;
+}
+
+.message.received {
+  justify-content: flex-start;
+}
+
+.message.sent {
+  justify-content: flex-end;
+}
+
+.message-bubble {
+  max-width: 70%;
+  padding: 12px;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.received .message-bubble {
+  background-color: white;
+}
+
+.sent .message-bubble {
+  background-color: #d9fdd3;
+}
+
+.message-input-bar {
+  background-color: #ededed;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.message-input {
+  flex: 1;
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: none;
+  outline: none;
+}
+/* Contenedor principal */
+.login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #128C7E, #075E54);
+  padding: 20px;
+}
+
+/* Tarjeta de Login */
+.login-card {
+  background-color: white;
+  border-radius: 12px;
+  padding: 40px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Animación de entrada */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Título */
+.login-card h1 {
+  color: #128C7E;
+  margin-bottom: 12px;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+/* Texto descriptivo */
+.login-card p {
+  color: #667781;
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+/* Grupo de formulario */
+.form-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+/* Etiquetas */
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  color: #444;
+  font-weight: 600;
+}
+
+/* Inputs */
+.form-group input {
+  margin-right: 15px;
+  width: 95%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 16px;
+  transition: border-color 0.3s ease-in-out;
+}
+
+/* Input en foco */
+.form-group input:focus {
+  border-color: #128C7E;
+  outline: none;
+}
+
+/* Botón de Login */
+.login-button {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #128C7E, #0E6655);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 20px;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.google-auth-button {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, red, white, red);
+  border-radius: 5px;
+  border: 0px;
+  color: green;
+  font-size: 20px;
+  font-family: 'Franklin Gothic Medium';
+  font-weight: bold;
+  margin-top: 1px;
+  margin-bottom: 5px;
+  cursor: pointer;
+}
+
+.github-auth-button {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, black, white, black);
+  border-radius: 5px;
+  border: 0px;
+  color: green;
+  font-size: 20px;
+  font-family: 'Franklin Gothic Medium';
+  font-weight: bold;
+  margin-top: 1px;
+  cursor: pointer;
+}
+
+/* Efecto Hover */
+.login-button:hover {
+  background: linear-gradient(135deg, #0E6655, #075E54);
+  transform: scale(1.05);
+}
+
+/* Mensaje de error */
+.input-error {
+  border-color: #e74c3c !important;
+}
+
+.error-message {
+  color: #e74c3c;
+  font-size: 14px;
+  margin-top: 5px;
+  display: block;
+}
+
+/* Avatares */
+.avatars-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 12px;
+  margin-top: 15px;
+  justify-content: center;
+}
+
+.avatar-item {
+  cursor: pointer;
+  border-radius: 50%;
+  overflow: hidden;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 3px solid transparent;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Imágenes dentro de los avatares */
+.avatar-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Avatar seleccionado */
+.avatar-item.selected {
+  border-color: #128C7E;
+  box-shadow: 0 0 10px rgba(18, 140, 126, 0.4);
+}
+
+/* Efecto Hover en los avatares */
+.avatar-item:hover {
+  transform: scale(1.1);
+  border-color: rgba(18, 140, 126, 0.7);
+}
+
+.message img {
+  max-width: 300px;
+  max-height: 200px;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.sender-name {
+  font-size: 0.8rem;
+  color: #128C7E;
+  margin-bottom: 4px;
+}
+
+.logout-container {
+  padding: 16px;
+  border-top: 1px solid #dadada;
+  margin-top: auto;
+}
+
+.logout-button {
+  width: 100%;
+  padding: 10px 0;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.3s;
+}
+
+.logout-button:hover {
+  background-color: #d32f2f;
+}
+
+.logout-button:active {
+  background-color: #b71c1c;
+}
