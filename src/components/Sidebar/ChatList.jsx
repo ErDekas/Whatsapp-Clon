@@ -13,7 +13,7 @@ export const ChatList = ({ currentUserId }) => {
 
   // Inicializar Socket.IO
   useEffect(() => {
-    const newSocket = io('http://localhost:5000');
+    const newSocket = io();
     setSocket(newSocket);
 
     // Limpiar la conexión de socket cuando el componente se desmonte
@@ -27,12 +27,12 @@ export const ChatList = ({ currentUserId }) => {
     const fetchAvatars = async () => {
       setLoadingAvatars(true);
       try {
-        const response = await axios.get('http://localhost:5000/avatars');
+        const response = await axios.get('./avatars');
         
         // Formatea los datos para que coincidan con la estructura esperada
         const formattedAvatars = response.data.map((avatar, index) => ({
           id: index + 1,
-          url: `http://localhost:5000/uploads/avatares/${avatar}`,
+          url: `./avatares/${avatar}`,
           alt: `Avatar ${index + 1}`
         }));
         
@@ -41,9 +41,9 @@ export const ChatList = ({ currentUserId }) => {
         console.error('Error al cargar avatares:', error);
         // Si hay un error, usar algunos avatares predeterminados como fallback
         setAvatars([
-          { id: 1, url: 'http://localhost:5000/uploads/avatares/avatar1.jpg', alt: 'Avatar 1' },
-          { id: 2, url: 'http://localhost:5000/uploads/avatares/avatar2.jpg', alt: 'Avatar 2' },
-          { id: 3, url: 'http://localhost:5000/uploads/avatares/avatar3.jpg', alt: 'Avatar 3' },
+          { id: 1, url: './avatares/avatar1.jpg', alt: 'Avatar 1' },
+          { id: 2, url: './avatares/avatar2.jpg', alt: 'Avatar 2' },
+          { id: 3, url: './avatares/avatar3.jpg', alt: 'Avatar 3' },
         ]);
       } finally {
         setLoadingAvatars(false);

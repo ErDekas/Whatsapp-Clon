@@ -16,7 +16,7 @@ export const MainChat = () => {
   const { user } = useAuth();
 
   useEffect(() => {
-    const newSocket = io('http://localhost:5000');
+    const newSocket = io();
     setSocket(newSocket);
 
     const q = query(collection(db, 'messages'), orderBy('timestamp', 'asc'));

@@ -1,11 +1,12 @@
 import React from 'react';
 
-export const Message = ({ text, isSent, imageUrl }) => {
+export const Message = ({ text, isSent, imageUrl, senderName }) => {
   if (!text && !imageUrl) return null; // Evita renderizar un mensaje vacío
 
   return (
     <div className={`message ${isSent ? 'sent' : 'received'}`}>
       <div className="message-bubble">
+      <strong>{senderName}</strong>
         {text && <p>{text}</p>}
         {imageUrl && (
           <img

@@ -5,7 +5,14 @@ import axios from 'axios';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
-  const { login, signInWithEmail, signUpWithEmail, signInWithGoogle, signInWithGitHub } = useAuth();
+  const { 
+    login, 
+    signInWithEmail, 
+    signUpWithEmail, 
+    signInWithGoogle, 
+    signInWithGitHub, 
+    user  // Usando user en lugar de currentUser
+  } = useAuth();
   
   // Estado para controlar qué vista mostrar (login o personalización)
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -34,27 +41,44 @@ export const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [loadingAvatars, setLoadingAvatars] = useState(false);
 
+  // Verificar si el usuario ya está autenticado
+  useEffect(() => {
+    if (user) {
+      login({
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        uid: user.uid
+      });
+      navigate('/chat');
+    }
+  }, [user, login, navigate]);
+
+  const handleCredentialChange = (e) => {
+    const { name, value } = e.target;
+    setCredentials({ ...credentials, [name]: value });
+  };
+
   // Cargar avatares del servidor
   useEffect(() => {
     const fetchAvatars = async () => {
       setLoadingAvatars(true);
       try {
-        const response = await axios.get('http://localhost:5000/avatars');
+        const response = await axios.get('./avatars');
         const formattedAvatars = response.data.map((avatar, index) => ({
           id: index + 1,
-          url: `http://localhost:5000/uploads/avatares/${avatar}`,
+          url: `./avatares/${avatar}`,
           alt: `Avatar ${index + 1}`
         }));
         setAvatars(formattedAvatars);
       } catch (error) {
         console.error('Error al cargar avatares:', error);
         setAvatars([
-          { id: 1, url: 'http://localhost:5000/uploads/avatares/avatar1.jpg', alt: 'Avatar 1' },
-          { id: 2, url: 'http://localhost:5000/uploads/avatares/avatar2.jpg', alt: 'Avatar 2' },
-          { id: 3, url: 'http://localhost:5000/uploads/avatares/avatar3.jpg', alt: 'Avatar 3' },
-          { id: 4, url: 'http://localhost:5000/uploads/avatares/avatar4.jpg', alt: 'Avatar 4' },
-          { id: 5, url: 'http://localhost:5000/uploads/avatares/avatar5.jpg', alt: 'Avatar 5' },
-          { id: 6, url: 'http://localhost:5000/uploads/avatares/avatar6.jpg', alt: 'Avatar 6' }
+          { id: 1, url: './avatares/avatar1.jpg', alt: 'Avatar 1' },
+          { id: 2, url: './avatares/avatar2.jpg', alt: 'Avatar 2' },
+          { id: 3, url: './avatares/avatar3.jpg', alt: 'Avatar 3' },
+          { id: 4, url: './avatares/avatar4.jpg', alt: 'Avatar 4' },
+          { id: 5, url: './avatares/avatar5.jpg', alt: 'Avatar 5' },
+          { id: 6, url: './avatares/avatar6.jpg', alt: 'Avatar 6' }
         ]);
       } finally {
         setLoadingAvatars(false);
@@ -63,15 +87,6 @@ export const LoginPage = () => {
 
     fetchAvatars();
   }, []);
-
-  // Maneja cambios en los campos de email/password
-  const handleCredentialChange = (e) => {
-    const { name, value } = e.target;
-    setCredentials({
-      ...credentials,
-      [name]: value
-    });
-  };
 
   // Maneja cambios en los campos de perfil
   const handleProfileChange = (e) => {
@@ -93,23 +108,19 @@ export const LoginPage = () => {
   // Valida el formulario de inicio de sesión o registro
   const validateForm = () => {
     const newErrors = {};
-    
     if (!credentials.email.trim()) {
       newErrors.email = 'El correo electrónico es obligatorio';
     } else if (!/\S+@\S+\.\S+/.test(credentials.email)) {
       newErrors.email = 'Formato de correo electrónico inválido';
     }
-    
     if (!credentials.password) {
       newErrors.password = 'La contraseña es obligatoria';
     } else if (credentials.password.length < 6) {
       newErrors.password = 'La contraseña debe tener al menos 6 caracteres';
     }
-    
     if (isRegisterMode && credentials.password !== credentials.confirmPassword) {
       newErrors.confirmPassword = 'Las contraseñas no coinciden';
     }
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -141,46 +152,57 @@ export const LoginPage = () => {
     if (validateForm()) {
       setLoading(true);
       try {
+        let userCredentials;
         if (isRegisterMode) {
           // Llamar a la función de registro con email/password
-          await signUpWithEmail(credentials.email, credentials.password);
+          userCredentials = await signUpWithEmail(credentials.email, credentials.password);
         } else {
           // Llamar a la función de autenticación con email/password
-          await signInWithEmail(credentials.email, credentials.password);
+          userCredentials = await signInWithEmail(credentials.email, credentials.password);
         }
-        setIsAuthenticated(true);
-        setLoading(false);
+        
+        if (userCredentials?.user) {
+          if (isRegisterMode) {
+            setIsAuthenticated(true); // Si es registro, vamos a personalización
+          } else {
+            // Si es login y existe el usuario, redirigimos directamente
+            login({
+              displayName: userCredentials.user.displayName,
+              photoURL: userCredentials.user.photoURL,
+              uid: userCredentials.user.uid
+            });
+            navigate('/chat');
+          }
+        }
       } catch (error) {
         setErrors({...errors, auth: 'Error: ' + error.message});
-        setLoading(false);
       }
-    }
-  };
-
-  // Maneja el inicio de sesión con Google
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    try {
-      await signInWithGoogle();
-      setIsAuthenticated(true);
-      setLoading(false);
-    } catch (error) {
-      setErrors({...errors, auth: 'Error al iniciar sesión con Google: ' + error.message});
       setLoading(false);
     }
   };
 
-  // Maneja el inicio de sesión con GitHub
-  const handleGitHubLogin = async () => {
+  const handleSocialLogin = async (provider) => {
     setLoading(true);
     try {
-      await signInWithGitHub();
-      setIsAuthenticated(true);
-      setLoading(false);
+      let userCredentials;
+      if (provider === 'google') {
+        userCredentials = await signInWithGoogle();
+      } else if (provider === 'github') {
+        userCredentials = await signInWithGitHub();
+      }
+      
+      if (userCredentials?.user) {
+        login({
+          displayName: userCredentials.user.displayName,
+          photoURL: userCredentials.user.photoURL,
+          uid: userCredentials.user.uid
+        });
+        navigate('/chat');
+      }
     } catch (error) {
-      setErrors({...errors, auth: 'Error al iniciar sesión con GitHub: ' + error.message});
-      setLoading(false);
+      setErrors({ ...errors, auth: `Error al iniciar sesión con ${provider}: ` + error.message });
     }
+    setLoading(false);
   };
 
   // Maneja el envío del formulario de perfil
@@ -193,7 +215,7 @@ export const LoginPage = () => {
         displayName: profileData.name,
         status: profileData.status,
         photoURL: profileData.avatarUrl,
-        uid: Date.now().toString() // Generamos un ID único temporal o usar el de auth
+        uid: user?.uid || Date.now().toString() // Usar el UID del usuario existente o generar uno temporal
       });
       
       navigate('/chat');
@@ -266,14 +288,14 @@ export const LoginPage = () => {
         <p>O inicia sesión con:</p>
         <div className="auth-buttons">
           <button 
-            onClick={handleGoogleLogin} 
+            onClick={() => handleSocialLogin('google')} 
             className="google-auth-button" 
             disabled={loading}
           >
             Google
           </button>
           <button 
-            onClick={handleGitHubLogin} 
+            onClick={() => handleSocialLogin('github')} 
             className="github-auth-button" 
             disabled={loading}
           >
@@ -304,9 +326,11 @@ export const LoginPage = () => {
 
   // Renderiza la vista de personalización de perfil
   const renderProfileView = () => (
-    <div className="login-card">
-      <h1>WhatsApp Clone</h1>
-      <p>Personaliza tu perfil para comenzar</p>
+    <div className="login-card profile-setup">
+      <h1>Personaliza tu perfil</h1>
+      <p>Configura tu perfil para comenzar a chatear</p>
+      
+      {errors.auth && <div className="error-banner">{errors.auth}</div>}
       
       <form onSubmit={handleProfileSubmit}>
         <div className="form-group">
@@ -317,7 +341,7 @@ export const LoginPage = () => {
             name="name"
             value={profileData.name}
             onChange={handleProfileChange}
-            placeholder="Escribe tu nombre"
+            placeholder="Tu nombre"
             className={errors.name ? 'input-error' : ''}
           />
           {errors.name && <span className="error-message">{errors.name}</span>}
@@ -331,7 +355,7 @@ export const LoginPage = () => {
             name="status"
             value={profileData.status}
             onChange={handleProfileChange}
-            placeholder="¿Qué estás pensando?"
+            placeholder="Tu estado"
             className={errors.status ? 'input-error' : ''}
           />
           {errors.status && <span className="error-message">{errors.status}</span>}
@@ -339,14 +363,14 @@ export const LoginPage = () => {
         
         <div className="form-group">
           <label>Selecciona un avatar</label>
-          <div className="avatars-container">
+          <div className="avatar-grid">
             {loadingAvatars ? (
-              <div className="loading-avatars">Cargando avatares...</div>
+              <p>Cargando avatares...</p>
             ) : (
               avatars.map((avatar) => (
-                <div 
+                <div
                   key={avatar.id}
-                  className={`avatar-item ${selectedAvatar === avatar.id ? 'selected' : ''}`}
+                  className={`avatar-option ${selectedAvatar === avatar.id ? 'selected' : ''}`}
                   onClick={() => handleAvatarSelect(avatar)}
                 >
                   <img src={avatar.url} alt={avatar.alt} />
@@ -357,8 +381,12 @@ export const LoginPage = () => {
           {errors.avatar && <span className="error-message">{errors.avatar}</span>}
         </div>
         
-        <button type="submit" className="login-button">
-          Comenzar a chatear
+        <button
+          type="submit"
+          className="profile-submit-button"
+          disabled={loading}
+        >
+          {loading ? 'Guardando perfil...' : 'Comenzar a chatear'}
         </button>
       </form>
     </div>
