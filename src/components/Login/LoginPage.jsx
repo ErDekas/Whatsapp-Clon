@@ -11,7 +11,7 @@ export const LoginPage = () => {
     signUpWithEmail, 
     signInWithGoogle, 
     signInWithGitHub, 
-    user  // Usando user en lugar de currentUser
+    user
   } = useAuth();
   
   // Estado para controlar qué vista mostrar (login o personalización)
@@ -44,14 +44,10 @@ export const LoginPage = () => {
   // Verificar si el usuario ya está autenticado
   useEffect(() => {
     if (user) {
-      login({
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-        uid: user.uid
-      });
+      // Evitamos recargar la página para prevenir el ciclo infinito
       navigate('/chat');
     }
-  }, [user, login, navigate]);
+  }, [user, navigate]);
 
   const handleCredentialChange = (e) => {
     const { name, value } = e.target;
@@ -165,11 +161,12 @@ export const LoginPage = () => {
           if (isRegisterMode) {
             setIsAuthenticated(true); // Si es registro, vamos a personalización
           } else {
-            // Si es login y existe el usuario, redirigimos directamente
+            // Si es login y existe el usuario
             login({
-              displayName: userCredentials.user.displayName,
-              photoURL: userCredentials.user.photoURL,
-              uid: userCredentials.user.uid
+              displayName: userCredentials.user.displayName || '',
+              photoURL: userCredentials.user.photoURL || '',
+              uid: userCredentials.user.uid,
+              email: userCredentials.user.email
             });
             navigate('/chat');
           }
@@ -193,9 +190,11 @@ export const LoginPage = () => {
       
       if (userCredentials?.user) {
         login({
-          displayName: userCredentials.user.displayName,
-          photoURL: userCredentials.user.photoURL,
-          uid: userCredentials.user.uid
+          displayName: userCredentials.user.displayName || '',
+          photoURL: userCredentials.user.photoURL || '',
+          uid: userCredentials.user.uid,
+          email: userCredentials.user.email,
+          status: 'Disponible' // Valor por defecto
         });
         navigate('/chat');
       }
@@ -215,9 +214,11 @@ export const LoginPage = () => {
         displayName: profileData.name,
         status: profileData.status,
         photoURL: profileData.avatarUrl,
-        uid: user?.uid || Date.now().toString() // Usar el UID del usuario existente o generar uno temporal
+        uid: user?.uid || Date.now().toString(), // Usar el UID del usuario existente o generar uno temporal
+        email: user?.email || ''
       });
       
+      // Redirigir sin recargar la página
       navigate('/chat');
     }
   };

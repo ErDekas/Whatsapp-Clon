@@ -4,7 +4,7 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   GoogleAuthProvider,
-  // GithubAuthProvider,
+  GithubAuthProvider, // Descomentado
   createUserWithEmailAndPassword
 } from '../services/firebase';
 
@@ -51,7 +51,7 @@ export const AuthProvider = ({ children }) => {
   const signInWithEmail = async (email, password) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      return userCredential.user;
+      return { user: userCredential.user };
     } catch (error) {
       console.error("Error al iniciar sesión con email:", error);
       throw error;
@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }) => {
   const signUpWithEmail = async (email, password) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      return userCredential.user;
+      return { user: userCredential.user };
     } catch (error) {
       console.error("Error al registrarse con email:", error);
       throw error;
@@ -74,7 +74,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      return result.user;
+      return { user: result.user }; // Cambio para devolver objeto con misma estructura
     } catch (error) {
       console.error("Error al iniciar sesión con Google:", error);
       throw error;
@@ -82,16 +82,16 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Función para iniciar sesión con GitHub
-  // const signInWithGitHub = async () => {
-  //   try {
-  //     const provider = new GithubAuthProvider();
-  //     const result = await signInWithPopup(auth, provider);
-  //     return result.user;
-  //   } catch (error) {
-  //     console.error("Error al iniciar sesión con GitHub:", error);
-  //     throw error;
-  //   }
-  // };
+  const signInWithGitHub = async () => {
+    try {
+      const provider = new GithubAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      return { user: result.user }; // Cambio para devolver objeto con misma estructura
+    } catch (error) {
+      console.error("Error al iniciar sesión con GitHub:", error);
+      throw error;
+    }
+  };
 
   // Función para actualizar datos de perfil
   const updateProfile = (profileData) => {
@@ -133,7 +133,7 @@ export const AuthProvider = ({ children }) => {
     signInWithEmail,
     signUpWithEmail,
     signInWithGoogle,
-    // signInWithGitHub,
+    signInWithGitHub, // Descomentado
     updateProfile
   };
 

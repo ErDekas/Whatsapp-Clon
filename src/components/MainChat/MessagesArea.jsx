@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Message } from './Message';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext'; // Ajusta la ruta según tu estructura
 
 export const MessagesArea = ({ messages, userEvents }) => {
   const { user } = useAuth();
@@ -67,7 +67,7 @@ export const MessagesArea = ({ messages, userEvents }) => {
           <Message
             key={message.id || message.timestamp?.toString()}
             text={message.message}
-            imageUrl={message.imageUrl}
+            file={message.file}
             isSent={message.senderId === user.uid}
             senderName={message.senderName}
           />
@@ -85,6 +85,18 @@ export const MessagesArea = ({ messages, userEvents }) => {
       </div>
       
       <style jsx>{`
+        .messages-area {
+          flex: 1;
+          overflow-y: auto;
+          padding: 15px;
+          background-color: #f7f7f7;
+        }
+        
+        .message-container {
+          display: flex;
+          flex-direction: column;
+        }
+        
         .system-message-container {
           display: flex;
           justify-content: center;
