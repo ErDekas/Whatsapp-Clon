@@ -65,8 +65,6 @@ export const Message = ({ text, file, isSent, senderName, timestamp }) => {
             </button>
           </div>
         )}
-
-        <div className="message-time">{formattedTime}</div>
       </div>
     </div>
   );

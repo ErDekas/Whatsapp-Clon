@@ -11,11 +11,12 @@ export const LoginPage = () => {
     signUpWithEmail, 
     signInWithGoogle, 
     signInWithGitHub, 
-    user
+    user,
+    profileComplete
   } = useAuth();
   
   // Estado para controlar qué vista mostrar (login o personalización)
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showProfileSetup, setShowProfileSetup] = useState(false);
   
   // Estado para controlar si estamos en modo de inicio de sesión o registro
   const [isRegisterMode, setIsRegisterMode] = useState(false);
@@ -41,13 +42,48 @@ export const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [loadingAvatars, setLoadingAvatars] = useState(false);
 
-  // Verificar si el usuario ya está autenticado
+  // Verificar el estado del usuario y decidir qué vista mostrar
   useEffect(() => {
     if (user) {
-      // Evitamos recargar la página para prevenir el ciclo infinito
-      navigate('/chat');
+      // Si el usuario está autenticado, verificamos si necesita completar el perfil
+      if (profileComplete) {
+        // Si el perfil está completo, redirigimos a chat
+        navigate('/chat');
+      } else {
+        // Si está autenticado pero no tiene perfil completo, mostramos la vista de personalización
+        setShowProfileSetup(true);
+        
+        // Pre-llenamos el correo si está disponible
+        if (user.email) {
+          setProfileData(prev => ({
+            ...prev,
+            email: user.email
+          }));
+        }
+        
+        // Pre-llenamos el nombre si está disponible (para logins sociales)
+        if (user.displayName) {
+          setProfileData(prev => ({
+            ...prev,
+            name: user.displayName
+          }));
+        }
+        
+        // Pre-llenamos el avatar si está disponible (para logins sociales)
+        if (user.photoURL) {
+          setProfileData(prev => ({
+            ...prev,
+            avatarUrl: user.photoURL
+          }));
+          // Nota: aquí podríamos buscar el avatar correspondiente en la lista
+          // y seleccionarlo, pero eso dependería de la estructura de tus datos
+        }
+      }
+    } else {
+      // Si no hay usuario, mostramos la vista de autenticación
+      setShowProfileSetup(false);
     }
-  }, [user, navigate]);
+  }, [user, profileComplete, navigate]);
 
   const handleCredentialChange = (e) => {
     const { name, value } = e.target;
@@ -148,28 +184,15 @@ export const LoginPage = () => {
     if (validateForm()) {
       setLoading(true);
       try {
-        let userCredentials;
         if (isRegisterMode) {
           // Llamar a la función de registro con email/password
-          userCredentials = await signUpWithEmail(credentials.email, credentials.password);
+          await signUpWithEmail(credentials.email, credentials.password);
+          // Después del registro, siempre mostramos la vista de perfil
+          setShowProfileSetup(true);
         } else {
           // Llamar a la función de autenticación con email/password
-          userCredentials = await signInWithEmail(credentials.email, credentials.password);
-        }
-        
-        if (userCredentials?.user) {
-          if (isRegisterMode) {
-            setIsAuthenticated(true); // Si es registro, vamos a personalización
-          } else {
-            // Si es login y existe el usuario
-            login({
-              displayName: userCredentials.user.displayName || '',
-              photoURL: userCredentials.user.photoURL || '',
-              uid: userCredentials.user.uid,
-              email: userCredentials.user.email
-            });
-            navigate('/chat');
-          }
+          await signInWithEmail(credentials.email, credentials.password);
+          // El useEffect decidirá si mostrar perfil o ir a chat basado en profileComplete
         }
       } catch (error) {
         setErrors({...errors, auth: 'Error: ' + error.message});
@@ -181,22 +204,12 @@ export const LoginPage = () => {
   const handleSocialLogin = async (provider) => {
     setLoading(true);
     try {
-      let userCredentials;
       if (provider === 'google') {
-        userCredentials = await signInWithGoogle();
+        await signInWithGoogle();
+        // La lógica de redirección será manejada por el useEffect
       } else if (provider === 'github') {
-        userCredentials = await signInWithGitHub();
-      }
-      
-      if (userCredentials?.user) {
-        login({
-          displayName: userCredentials.user.displayName || '',
-          photoURL: userCredentials.user.photoURL || '',
-          uid: userCredentials.user.uid,
-          email: userCredentials.user.email,
-          status: 'Disponible' // Valor por defecto
-        });
-        navigate('/chat');
+        await signInWithGitHub();
+        // La lógica de redirección será manejada por el useEffect
       }
     } catch (error) {
       setErrors({ ...errors, auth: `Error al iniciar sesión con ${provider}: ` + error.message });
@@ -214,11 +227,11 @@ export const LoginPage = () => {
         displayName: profileData.name,
         status: profileData.status,
         photoURL: profileData.avatarUrl,
-        uid: user?.uid || Date.now().toString(), // Usar el UID del usuario existente o generar uno temporal
+        uid: user?.uid || Date.now().toString(),
         email: user?.email || ''
       });
       
-      // Redirigir sin recargar la página
+      // El login actualiza profileComplete y navegamos a /chat explícitamente
       navigate('/chat');
     }
   };
@@ -395,7 +408,7 @@ export const LoginPage = () => {
 
   return (
     <div className="login-container">
-      {isAuthenticated ? renderProfileView() : renderAuthView()}
+      {showProfileSetup ? renderProfileView() : renderAuthView()}
     </div>
   );
 };

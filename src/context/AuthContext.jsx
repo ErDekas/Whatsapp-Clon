@@ -4,7 +4,7 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   GoogleAuthProvider,
-  GithubAuthProvider, // Descomentado
+  GithubAuthProvider,
   createUserWithEmailAndPassword
 } from '../services/firebase';
 
@@ -13,13 +13,18 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Nuevo estado para controlar si el perfil está completo
+  const [profileComplete, setProfileComplete] = useState(true);
 
   useEffect(() => {
     // Primero verificamos si hay un usuario guardado en localStorage
     const savedUser = localStorage.getItem('whatsapp_user');
     
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      const parsedUser = JSON.parse(savedUser);
+      setUser(parsedUser);
+      // Verificar si el perfil está completo
+      setProfileComplete(!!parsedUser.displayName && !!parsedUser.photoURL);
       setLoading(false);
       return;
     }
@@ -35,11 +40,28 @@ export const AuthProvider = ({ children }) => {
           photoURL: firebaseUser.photoURL || '',
           status: 'Disponible' // Valor por defecto
         };
-        setUser(userData);
-        // Guardar en localStorage para futuros accesos
-        localStorage.setItem('whatsapp_user', JSON.stringify(userData));
+        
+        // Verificar si el perfil está completo
+        const isComplete = !!userData.displayName && !!userData.photoURL;
+        setProfileComplete(isComplete);
+        
+        // Si el usuario viene de un proveedor social, normalmente ya tiene perfil completo
+        // Solo guardamos en localStorage si el perfil está completo
+        if (isComplete) {
+          setUser(userData);
+          localStorage.setItem('whatsapp_user', JSON.stringify(userData));
+        } else {
+          // Si el perfil no está completo, solo guardamos el ID y el email
+          // para completar el resto en la página de perfil
+          setUser({
+            uid: userData.uid,
+            email: userData.email,
+            // No incluimos displayName ni photoURL
+          });
+        }
       } else {
         setUser(null);
+        setProfileComplete(true); // Reiniciar estado
       }
       setLoading(false);
     });
@@ -51,6 +73,9 @@ export const AuthProvider = ({ children }) => {
   const signInWithEmail = async (email, password) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      // Verificar si el usuario ya tiene perfil completo
+      const isComplete = !!userCredential.user.displayName && !!userCredential.user.photoURL;
+      setProfileComplete(isComplete);
       return { user: userCredential.user };
     } catch (error) {
       console.error("Error al iniciar sesión con email:", error);
@@ -62,6 +87,8 @@ export const AuthProvider = ({ children }) => {
   const signUpWithEmail = async (email, password) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      // Los usuarios nuevos con email no tienen perfil completo
+      setProfileComplete(false);
       return { user: userCredential.user };
     } catch (error) {
       console.error("Error al registrarse con email:", error);
@@ -74,7 +101,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      return { user: result.user }; // Cambio para devolver objeto con misma estructura
+      // Los usuarios de Google generalmente tienen nombre y foto
+      setProfileComplete(true);
+      return { user: result.user };
     } catch (error) {
       console.error("Error al iniciar sesión con Google:", error);
       throw error;
@@ -86,7 +115,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const provider = new GithubAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      return { user: result.user }; // Cambio para devolver objeto con misma estructura
+      // Los usuarios de GitHub generalmente tienen nombre y foto
+      setProfileComplete(true);
+      return { user: result.user };
     } catch (error) {
       console.error("Error al iniciar sesión con GitHub:", error);
       throw error;
@@ -102,6 +133,7 @@ export const AuthProvider = ({ children }) => {
         ...profileData
       };
       setUser(updatedUser);
+      setProfileComplete(true);
       localStorage.setItem('whatsapp_user', JSON.stringify(updatedUser));
     }
   };
@@ -109,6 +141,7 @@ export const AuthProvider = ({ children }) => {
   // Función para iniciar sesión con datos personalizados
   const login = (userData) => {
     setUser(userData);
+    setProfileComplete(!!userData.displayName && !!userData.photoURL);
     localStorage.setItem('whatsapp_user', JSON.stringify(userData));
   };
 
@@ -123,6 +156,7 @@ export const AuthProvider = ({ children }) => {
     }
     
     setUser(null);
+    setProfileComplete(true); // Reiniciar estado
   };
 
   const value = {
@@ -133,8 +167,9 @@ export const AuthProvider = ({ children }) => {
     signInWithEmail,
     signUpWithEmail,
     signInWithGoogle,
-    signInWithGitHub, // Descomentado
-    updateProfile
+    signInWithGitHub,
+    updateProfile,
+    profileComplete // Exportamos el estado de si el perfil está completo
   };
 
   return (
