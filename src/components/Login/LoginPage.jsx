@@ -44,12 +44,15 @@ export const LoginPage = () => {
 
   // Verificar el estado del usuario y decidir qué vista mostrar
   useEffect(() => {
+    console.log("useEffect triggered:", { user, profileComplete });
     if (user) {
       // Si el usuario está autenticado, verificamos si necesita completar el perfil
       if (profileComplete) {
+        console.log("Redirecting to chat because profile is complete");
         // Si el perfil está completo, redirigimos a chat
         navigate('/chat');
       } else {
+        console.log("Showing profile setup");
         // Si está autenticado pero no tiene perfil completo, mostramos la vista de personalización
         setShowProfileSetup(true);
         
@@ -81,6 +84,7 @@ export const LoginPage = () => {
       }
     } else {
       // Si no hay usuario, mostramos la vista de autenticación
+      console.log("No user, showing auth view");
       setShowProfileSetup(false);
     }
   }, [user, profileComplete, navigate]);
@@ -185,14 +189,33 @@ export const LoginPage = () => {
       setLoading(true);
       try {
         if (isRegisterMode) {
-          // Llamar a la función de registro con email/password
+          // Registro
           await signUpWithEmail(credentials.email, credentials.password);
-          // Después del registro, siempre mostramos la vista de perfil
+          // Para registro, siempre mostrar configuración de perfil
           setShowProfileSetup(true);
         } else {
-          // Llamar a la función de autenticación con email/password
-          await signInWithEmail(credentials.email, credentials.password);
-          // El useEffect decidirá si mostrar perfil o ir a chat basado en profileComplete
+          // Login
+          const result = await signInWithEmail(credentials.email, credentials.password);
+          
+          // SOLUCIÓN DRÁSTICA: Verificar si existe información de este usuario en localStorage
+          const savedUserData = localStorage.getItem('whatsapp_user');
+          let hasCompleteProfile = false;
+          
+          if (savedUserData) {
+            const userData = JSON.parse(savedUserData);
+            // Si el usuario tiene los datos necesarios en localStorage, consideramos su perfil completo
+            hasCompleteProfile = userData.uid === result.user.uid && 
+                                userData.displayName && 
+                                userData.photoURL;
+          }
+          
+          if (hasCompleteProfile) {
+            // Si tiene perfil completo, ir a chat
+            navigate('/chat');
+          } else {
+            // Si no tiene perfil completo, mostrar configuración
+            setShowProfileSetup(true);
+          }
         }
       } catch (error) {
         setErrors({...errors, auth: 'Error: ' + error.message});

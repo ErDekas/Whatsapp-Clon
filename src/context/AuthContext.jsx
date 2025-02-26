@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   // Nuevo estado para controlar si el perfil está completo
-  const [profileComplete, setProfileComplete] = useState(true);
+  const [profileComplete, setProfileComplete] = useState(false);
 
   useEffect(() => {
     // Primero verificamos si hay un usuario guardado en localStorage
@@ -58,6 +58,7 @@ export const AuthProvider = ({ children }) => {
             email: userData.email,
             // No incluimos displayName ni photoURL
           });
+          setProfileComplete(false);
         }
       } else {
         setUser(null);
@@ -73,10 +74,31 @@ export const AuthProvider = ({ children }) => {
   const signInWithEmail = async (email, password) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      // Verificar si el usuario ya tiene perfil completo
-      const isComplete = !!userCredential.user.displayName && !!userCredential.user.photoURL;
+      
+      // Comprobar si hay datos almacenados de este usuario en localStorage
+      const savedUser = JSON.parse(localStorage.getItem('whatsapp_user') || '{}');
+      const isSameUser = savedUser.uid === userCredential.user.uid;
+      
+      // Verificamos si el perfil está completo (tanto en Firebase como en localStorage)
+      const isComplete = 
+        (!!userCredential.user.displayName && !!userCredential.user.photoURL) || 
+        (isSameUser && !!savedUser.displayName && !!savedUser.photoURL);
+      
+      // Creamos el objeto de usuario
+      const userData = {
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        displayName: userCredential.user.displayName || '',
+        photoURL: userCredential.user.photoURL || '',
+      };
+      
+      // Actualizamos el estado
+      setUser(userData);
       setProfileComplete(isComplete);
-      return { user: userCredential.user };
+      
+      console.log("Profile complete?", isComplete); // Para depuración
+      
+      return { user: userCredential.user, profileComplete: isComplete };
     } catch (error) {
       console.error("Error al iniciar sesión con email:", error);
       throw error;
