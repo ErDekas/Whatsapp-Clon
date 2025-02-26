@@ -18,12 +18,21 @@ export const MainChat = () => {
   useEffect(() => {
     const newSocket = io();
     setSocket(newSocket);
-
+  
     const q = query(collection(db, 'messages'), orderBy('timestamp', 'asc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMessages(snapshot.docs.map(doc => ({id: doc.id, ...doc.data()})));
+      setMessages(prevMessages => {
+        const newMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  
+        // 🔹 Evitar duplicados comparando con el estado actual
+        const filteredMessages = newMessages.filter(newMsg =>
+          !prevMessages.some(existingMsg => existingMsg.id === newMsg.id)
+        );
+  
+        return [...prevMessages, ...filteredMessages];
+      });
     });
-
+  
     return () => {
       unsubscribe();
       if (newSocket) {
@@ -31,27 +40,30 @@ export const MainChat = () => {
       }
     };
   }, []);
-
+  
   useEffect(() => {
     if (!socket || !user) return;
-
+  
     socket.emit('joinChat', {
       userId: user.uid,
       username: user.displayName || 'Usuario'
     });
-
+  
     socket.on('previousMessages', (previousMessages) => {
-      setMessages(previousMessages);
+      setMessages(prevMessages => {
+        // 🔹 Solo agregar mensajes nuevos, evitar sobreescribir el estado
+        const filteredMessages = previousMessages.filter(newMsg =>
+          !prevMessages.some(existingMsg => existingMsg.id === newMsg.id)
+        );
+  
+        return [...prevMessages, ...filteredMessages];
+      });
     });
-
-    socket.on('newMessage', (message) => {
-      setMessages(prev => [...prev, message]);
-    });
-
+  
     socket.on('usersOnline', (users) => {
       setOnlineUsers(users);
     });
-    
+  
     socket.on('userConnected', (data) => {
       if (data.userId !== user.uid) {
         const newEvent = {
@@ -64,7 +76,7 @@ export const MainChat = () => {
         setUserEvents(prev => [...prev, newEvent]);
       }
     });
-    
+  
     socket.on('userDisconnected', (data) => {
       const newEvent = {
         type: 'disconnected',
@@ -75,9 +87,9 @@ export const MainChat = () => {
       };
       setUserEvents(prev => [...prev, newEvent]);
     });
-
+  
     socket.on('userTyping', (data) => {
-      console.log("Recibido evento userTyping:", data); // Depuración
+      console.log("Recibido evento userTyping:", data);
       
       setTypingUsers(prev => {
         const newState = { 
@@ -88,7 +100,7 @@ export const MainChat = () => {
           }
         };
         
-        console.log("Nuevo estado de typingUsers:", newState); // Depuración
+        console.log("Nuevo estado de typingUsers:", newState);
         return newState;
       });
       
@@ -102,7 +114,7 @@ export const MainChat = () => {
         }, 1000);
       }
     });
-
+  
     return () => {
       socket.off('previousMessages');
       socket.off('newMessage');
@@ -112,6 +124,7 @@ export const MainChat = () => {
       socket.off('userTyping');
     };
   }, [socket, user]);
+  
 
   const handleSendMessage = async (message, imageUrl) => {
     if (!message && !imageUrl || !socket) return;
